@@ -181,8 +181,8 @@ if st.session_state['view_mode'] == "Dashboard Overview":
     def prepare_trend_data(_data):
         all_invoices = [inv for customer in _data for inv in customer['invoices_details']]
         df_inv = pd.DataFrame(all_invoices)
-        df_inv['Invoice Generated Date'] = pd.to_datetime(df_inv['Invoice Generated Date'])
-        return df_inv.groupby(pd.Grouper(key='Invoice Generated Date', freq='M')).sum(numeric_only=True).reset_index()
+        df_inv['invoice_generated_date'] = pd.to_datetime(df_inv['invoice_generated_date'])
+        return df_inv.groupby(pd.Grouper(key='invoice_generated_date', freq='M')).sum(numeric_only=True).reset_index()
 
     total_receivable, total_overdue, total_customers, high_risk_customers = get_aggregate_metrics(data)
     
@@ -208,8 +208,8 @@ if st.session_state['view_mode'] == "Dashboard Overview":
 
         fig_trend = px.line(
             df_trend, 
-            x='Invoice Generated Date', 
-            y='Invoice Amount', 
+            x='invoice_generated_date', 
+            y='invoice_amount', 
             markers=True,
             line_shape='spline',
             title="Monthly Invoice Volume",
@@ -299,23 +299,23 @@ if st.session_state['view_mode'] == "Dashboard Overview":
 
         for index, row in paginated_df.iterrows():
             c1, c2, c3, c4, c5, c6 = st.columns([1.5, 2, 1.5, 1.5, 1.5, 1])
-            c1.write(row['Invoice Number'])
-            c2.write(row['Client'])
-            c3.write(row['Due Date'])
-            c4.write(format_currency(row['Amount']))
+            c1.write(row['invoice_number'])
+            c2.write(row['customer_name'])
+            c3.write(row['invoice_due_date'])
+            c4.write(format_currency(row['invoice_amount']))
 
             # Status Badge
-            status = row['Payment Status']
-            bg_color = "#fee2e2" if status == "Unpaid" and row['Days Past Due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
-            text_color = "#991b1b" if status == "Unpaid" and row['Days Past Due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
+            status = row['payment_status']
+            bg_color = "#fee2e2" if status == "Unpaid" and row['days_past_due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
+            text_color = "#991b1b" if status == "Unpaid" and row['days_past_due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
             c5.markdown(f"""
             <span style='background-color: {bg_color}; color: {text_color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;'>
                 {status}
             </span>
             """, unsafe_allow_html=True)
 
-            if c6.button("Analyze", key=f"btn_{row['Invoice Number']}"):
-                switch_to_analysis(row['Client'])
+            if c6.button("Analyze", key=f"btn_{row['invoice_number']}"):
+                switch_to_analysis(row['customer_name'])
                 st.rerun()
 
     else:
@@ -348,16 +348,16 @@ elif st.session_state['view_mode'] == "Customer Analysis":
             label_visibility="collapsed"
         )
 
-    # Update session state if dropdown changes
+   
     if selected_customer_name != st.session_state['selected_customer']:
         st.session_state['selected_customer'] = selected_customer_name
         st.session_state['is_loading'] = True
         st.rerun()
 
-    # Get selected customer data
+    
     customer_data = next(item for item in data if item['customer_name'] == st.session_state['selected_customer'])
 
-    # Customer Header Card
+   
     st.markdown(f"""
     <div style="background-color: #1e293b; padding: 24px; border-radius: 16px; border: 1px solid #334155; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -376,12 +376,11 @@ elif st.session_state['view_mode'] == "Customer Analysis":
     </div>
     """, unsafe_allow_html=True)
 
-    # Key Stats Row
+   
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
         create_metric_card("Client Score", f"{customer_data['client_score']:.2f}", "Reliability Index")
     with c2:
-        # Sentiment Score with Trend
         trend_icon = "↗" if customer_data['sentiment_trend'] == "Rising" else "↘" if customer_data['sentiment_trend'] == "Falling" else "→"
         delta_color = "normal" if customer_data['sentiment_trend'] == "Rising" else "inverse" if customer_data['sentiment_trend'] == "Falling" else ""
         create_metric_card("Sentiment Score", f"{customer_data['sentiment_score']:.2f}", customer_data['sentiment_trend'], delta_color=delta_color, trend_icon=trend_icon)
@@ -398,7 +397,7 @@ elif st.session_state['view_mode'] == "Customer Analysis":
     row1_1, row1_2 = st.columns([2, 1])
 
     with row1_1:
-        st.subheader("📅 Aging Analysis")
+        st.subheader(" Aging Analysis")
         buckets = customer_data['overdue_buckets']
         bucket_df = pd.DataFrame([
             {"Bucket": k, "Amount": v["amount"]} for k, v in buckets.items()
