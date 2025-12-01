@@ -267,36 +267,56 @@ if st.session_state['view_mode'] == "Dashboard Overview":
     if not df_invoices.empty:
         # The filter section was removed, so we use the full df_invoices DataFrame
         df_filtered = df_invoices.copy()
+        
+        # --- Pagination ---
+        items_per_page = 10
+        total_items = len(df_filtered)
+        total_pages = (total_items // items_per_page) + (1 if total_items % items_per_page > 0 else 0)
+        
+        if 'page_number' not in st.session_state:
+            st.session_state.page_number = 1
 
-        # Add a column for the button action
-        df_filtered['analyze'] = False
+        # Page selector
+        col_nav1, col_nav2 = st.columns([4, 1])
+        with col_nav2:
+            page_num = st.number_input(f"Page (1-{total_pages})", min_value=1, max_value=total_pages, value=st.session_state.page_number, key="page_selector")
+            st.session_state.page_number = page_num
 
-        # Use st.data_editor for an interactive and performant table
-        edited_df = st.data_editor(
-            df_filtered[['invoice_number', 'customer_name', 'invoice_due_date', 'invoice_amount', 'payment_status', 'analyze']],
-            hide_index=True,
-            use_container_width=True,
-            column_config={
-                "invoice_number": "Invoice #",
-                "customer_name": "Client",
-                "invoice_due_date": "Due Date",
-                "invoice_amount": st.column_config.NumberColumn("Amount", format="$%.2f"),
-                "payment_status": "Status",
-                "analyze": st.column_config.CheckboxColumn(
-                    "Analyze Client",
-                    help="Select to view detailed analysis for this client",
-                    default=False,
-                ),
-            },
-            disabled=df_filtered.columns.drop('analyze')
-        )
+        start_idx = (st.session_state.page_number - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        paginated_df = df_filtered.iloc[start_idx:end_idx]
 
-        # Find which row was clicked and switch views
-        selected_row = edited_df[edited_df.analyze]
-        if not selected_row.empty:
-            customer_to_analyze = selected_row.iloc[0]['customer_name']
-            switch_to_analysis(customer_to_analyze)
-            st.rerun()
+        # --- Custom Table with Buttons ---
+        # Custom Table Header
+        h1, h2, h3, h4, h5, h6 = st.columns([1.5, 2, 1.5, 1.5, 1.5, 1])
+        h1.markdown("**Invoice #**")
+        h2.markdown("**Client**")
+        h3.markdown("**Due Date**")
+        h4.markdown("**Amount**")
+        h5.markdown("**Status**")
+        h6.markdown("**Action**")
+        st.markdown("<hr style='margin: 0.5rem 0; border-color: #334155;'>", unsafe_allow_html=True)
+
+        for index, row in paginated_df.iterrows():
+            c1, c2, c3, c4, c5, c6 = st.columns([1.5, 2, 1.5, 1.5, 1.5, 1])
+            c1.write(row['invoice_number'])
+            c2.write(row['customer_name'])
+            c3.write(row['invoice_due_date'])
+            c4.write(format_currency(row['invoice_amount']))
+
+            # Status Badge
+            status = row['payment_status']
+            bg_color = "#fee2e2" if status == "Unpaid" and row['days_past_due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
+            text_color = "#991b1b" if status == "Unpaid" and row['days_past_due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
+            c5.markdown(f"""
+            <span style='background-color: {bg_color}; color: {text_color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;'>
+                {status}
+            </span>
+            """, unsafe_allow_html=True)
+
+            if c6.button("Analyze", key=f"btn_{row['invoice_number']}"):
+                switch_to_analysis(row['customer_name'])
+                st.rerun()
 
     else:
         st.info("No invoices found matching criteria.")
@@ -366,11 +386,11 @@ elif st.session_state['view_mode'] == "Customer Analysis":
         delta_color = "normal" if customer_data['sentiment_trend'] == "Rising" else "inverse" if customer_data['sentiment_trend'] == "Falling" else ""
         create_metric_card("Sentiment Score", f"{customer_data['sentiment_score']:.2f}", customer_data['sentiment_trend'], delta_color=delta_color, trend_icon=trend_icon)
     with c3:
-        create_metric_card("Total Invoiced", format_currency(customer_data['total_invoice_amount']))
+        create_metric_card("Total Invoice Amount", format_currency(customer_data['total_invoice_amount']))
     with c4:
-        create_metric_card("Outstanding", format_currency(customer_data['total_receivable']))
+        create_metric_card("Total Receivable", format_currency(customer_data['total_receivable']))
     with c5:
-        create_metric_card("Overdue", format_currency(customer_data['total_overdue_amount']), "Critical Amount", delta_color="inverse")
+        create_metric_card("Total Overdue", format_currency(customer_data['total_overdue_amount']), "Critical Amount", delta_color="inverse")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
