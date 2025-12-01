@@ -181,8 +181,8 @@ if st.session_state['view_mode'] == "Dashboard Overview":
     def prepare_trend_data(_data):
         all_invoices = [inv for customer in _data for inv in customer['invoices_details']]
         df_inv = pd.DataFrame(all_invoices)
-        df_inv['invoice_generated_date'] = pd.to_datetime(df_inv['invoice_generated_date'])
-        return df_inv.groupby(pd.Grouper(key='invoice_generated_date', freq='M')).sum(numeric_only=True).reset_index()
+        df_inv['Invoice Generated Date'] = pd.to_datetime(df_inv['Invoice Generated Date'])
+        return df_inv.groupby(pd.Grouper(key='Invoice Generated Date', freq='M')).sum(numeric_only=True).reset_index()
 
     total_receivable, total_overdue, total_customers, high_risk_customers = get_aggregate_metrics(data)
     
@@ -208,8 +208,8 @@ if st.session_state['view_mode'] == "Dashboard Overview":
 
         fig_trend = px.line(
             df_trend, 
-            x='invoice_generated_date', 
-            y='invoice_amount', 
+            x='Invoice Generated Date', 
+            y='Invoice Amount', 
             markers=True,
             line_shape='spline',
             title="Monthly Invoice Volume",
@@ -299,23 +299,23 @@ if st.session_state['view_mode'] == "Dashboard Overview":
 
         for index, row in paginated_df.iterrows():
             c1, c2, c3, c4, c5, c6 = st.columns([1.5, 2, 1.5, 1.5, 1.5, 1])
-            c1.write(row['invoice_number'])
-            c2.write(row['customer_name'])
-            c3.write(row['invoice_due_date'])
-            c4.write(format_currency(row['invoice_amount']))
+            c1.write(row['Invoice Number'])
+            c2.write(row['Client'])
+            c3.write(row['Due Date'])
+            c4.write(format_currency(row['Amount']))
 
             # Status Badge
-            status = row['payment_status']
-            bg_color = "#fee2e2" if status == "Unpaid" and row['days_past_due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
-            text_color = "#991b1b" if status == "Unpaid" and row['days_past_due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
+            status = row['Payment Status']
+            bg_color = "#fee2e2" if status == "Unpaid" and row['Days Past Due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
+            text_color = "#991b1b" if status == "Unpaid" and row['Days Past Due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
             c5.markdown(f"""
             <span style='background-color: {bg_color}; color: {text_color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;'>
                 {status}
             </span>
             """, unsafe_allow_html=True)
 
-            if c6.button("Analyze", key=f"btn_{row['invoice_number']}"):
-                switch_to_analysis(row['customer_name'])
+            if c6.button("Analyze", key=f"btn_{row['Invoice Number']}"):
+                switch_to_analysis(row['Client'])
                 st.rerun()
 
     else:
@@ -434,7 +434,7 @@ elif st.session_state['view_mode'] == "Customer Analysis":
             for rec in customer_data['recommendations']:
                 st.success(f"✓ {rec}")
 
-    # Invoices Table
+  
     st.markdown("---")
     c_head, c_btn = st.columns([4, 1])
     with c_head:
@@ -457,7 +457,7 @@ elif st.session_state['view_mode'] == "Customer Analysis":
             hide_index=True,
             column_config={
                 "invoice_amount": st.column_config.NumberColumn("Amount", format="$%.2f"),
-                "outstanding_amount": st.column_config.NumberColumn("Outstanding", format="$%.2f"),
+                "outstanding_amount": st.column_config.NumberColumn("Amount Receivable", format="$%.2f"),
             }
         )
     else:
