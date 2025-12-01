@@ -8,26 +8,26 @@ from datetime import date
 
 def validate_billing_response(response_data):
     """Validate the billing analysis response structure."""
-    
+
     errors = []
-    
+
     # Check top-level structure
     if not isinstance(response_data, dict):
         errors.append("Response must be a dictionary")
         return errors
-    
+
     if "results" not in response_data:
         errors.append("Response must contain 'results' key")
         return errors
-    
+
     if not isinstance(response_data["results"], list):
         errors.append("'results' must be a list")
         return errors
-    
+
     # Validate each customer result
     for idx, customer in enumerate(response_data["results"]):
         prefix = f"Customer {idx}"
-        
+
         # Required string fields
         string_fields = ["customer_id", "customer_name", "risk_level", "analysis_summary"]
         for field in string_fields:
@@ -35,7 +35,7 @@ def validate_billing_response(response_data):
                 errors.append(f"{prefix}: Missing field '{field}'")
             elif not isinstance(customer.get(field), str):
                 errors.append(f"{prefix}: Field '{field}' must be a string")
-        
+
         # Required numeric fields
         numeric_fields = [
             "total_invoices", "total_invoice_amount", "total_received", 
@@ -47,7 +47,7 @@ def validate_billing_response(response_data):
                 errors.append(f"{prefix}: Missing field '{field}'")
             elif not isinstance(customer.get(field), (int, float)):
                 errors.append(f"{prefix}: Field '{field}' must be numeric")
-        
+
         # Required list fields
         list_fields = ["key_factors", "recommendations", "invoices_details"]
         for field in list_fields:
@@ -55,7 +55,7 @@ def validate_billing_response(response_data):
                 errors.append(f"{prefix}: Missing field '{field}'")
             elif not isinstance(customer.get(field), list):
                 errors.append(f"{prefix}: Field '{field}' must be a list")
-        
+
         # Validate overdue_buckets structure
         if "overdue_buckets" not in customer:
             errors.append(f"{prefix}: Missing 'overdue_buckets'")
@@ -68,7 +68,7 @@ def validate_billing_response(response_data):
                 else:
                     if "count" not in buckets[bucket] or "amount" not in buckets[bucket]:
                         errors.append(f"{prefix}: Bucket '{bucket}' missing 'count' or 'amount'")
-        
+
         # Validate invoice details structure
         if "invoices_details" in customer and isinstance(customer["invoices_details"], list):
             for inv_idx, invoice in enumerate(customer["invoices_details"]):
@@ -81,13 +81,13 @@ def validate_billing_response(response_data):
                 for field in required_invoice_fields:
                     if field not in invoice:
                         errors.append(f"{inv_prefix}: Missing field '{field}'")
-    
+
     return errors
 
 
 def test_sample_response():
     """Test with a sample response structure."""
-    
+
     sample_response = {
         "results": [
             {
@@ -155,9 +155,9 @@ def test_sample_response():
             }
         ]
     }
-    
+
     errors = validate_billing_response(sample_response)
-    
+
     if errors:
         print("❌ Validation FAILED:")
         for error in errors:
@@ -174,9 +174,9 @@ if __name__ == "__main__":
     print("BillingAnalysis Response Structure Validator")
     print("=" * 60)
     print()
-    
+
     success = test_sample_response()
-    
+
     print()
     print("=" * 60)
     if success:
