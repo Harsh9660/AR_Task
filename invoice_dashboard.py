@@ -3,7 +3,16 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import time
+import logging
+import warnings
 from mock_data import get_mock_customer_data
+
+# Suppress warnings and configure logging
+warnings.filterwarnings('ignore')
+logging.getLogger('tornado.access').setLevel(logging.ERROR)
+logging.getLogger('tornado.application').setLevel(logging.ERROR)
+logging.getLogger('tornado.general').setLevel(logging.ERROR)
+logging.getLogger('streamlit').setLevel(logging.ERROR)
 
 # Set page configuration
 st.set_page_config(
