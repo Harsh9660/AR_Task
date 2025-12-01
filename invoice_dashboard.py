@@ -19,31 +19,36 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        color: #e2e8f0; /* Lighter text for dark theme */
     }
     .stApp {
-        background-color: #f8fafc;
+        background-color: #0f172a; /* Dark blue background */
     }
     .metric-card {
-        background-color: #ffffff;
+        background-color: #1e293b; /* Darker card background */
         padding: 24px;
         border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        border: 1px solid #334155;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
     .metric-value {
         font-size: 32px;
         font-weight: 700;
-        color: #0f172a;
+        color: #f8fafc; /* White text for values */
         margin-bottom: 4px;
     }
     .metric-label {
         font-size: 14px;
-        color: #64748b;
+        color: #94a3b8; /* Lighter grey for labels */
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -53,8 +58,8 @@ st.markdown("""
         font-weight: 600;
         margin-top: 8px;
     }
-    .delta-pos { color: #10b981; }
-    .delta-neg { color: #ef4444; }
+    .delta-pos { color: #22c55e; } /* Brighter green */
+    .delta-neg { color: #f87171; } /* Brighter red */
     
     /* Custom Button Styling */
     .stButton button {
@@ -74,14 +79,14 @@ st.markdown("""
     
     /* Header Styling */
     h1, h2, h3 {
-        color: #0f172a;
+        color: #f8fafc; /* White text for headers */
         font-weight: 700;
     }
     
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #e2e8f0;
+        background-color: #1e293b; /* Dark sidebar */
+        border-right: 1px solid #334155;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -115,17 +120,20 @@ def switch_to_analysis(customer_name):
 def format_currency(value):
     return f"${value:,.2f}"
 
-def create_metric_card(label, value, delta=None, delta_color="normal"):
+def create_metric_card(label, value, delta=None, delta_color="normal", trend_icon=None):
     delta_html = ""
     if delta:
-        color_class = "delta-pos" if (delta_color == "normal" and delta.startswith("+")) or (delta_color == "inverse" and delta.startswith("-")) else "delta-neg"
-        delta_html = f'<div class="metric-delta {color_class}">{delta}</div>'
+        color_class = "delta-pos" if (delta_color == "normal" and (not delta or delta.startswith("+"))) or (delta_color == "inverse" and delta.startswith("-")) else "delta-neg"
+        icon_html = f"{trend_icon} " if trend_icon else ""
+        delta_html = f'<div class="metric-delta {color_class}">{icon_html}{delta}</div>'
 
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">{label}</div>
-        <div class="metric-value">{value}</div>
-        {delta_html}
+        <div>
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+        </div>
+        {delta_html if delta else "<div></div>"}
     </div>
     """, unsafe_allow_html=True)
 
@@ -208,11 +216,12 @@ if st.session_state['view_mode'] == "Dashboard Overview":
             color_discrete_sequence=['#3b82f6']
         )
         fig_trend.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e293b',
+            paper_bgcolor='#1e293b',
             xaxis_title="Date",
             yaxis_title="Amount ($)",
-            hovermode="x unified"
+            hovermode="x unified",
+            font_color="#e2e8f0"
         )
         fig_trend.update_xaxes(showgrid=False)
         fig_trend.update_yaxes(showgrid=True, gridcolor='#f1f5f9')
@@ -234,10 +243,11 @@ if st.session_state['view_mode'] == "Dashboard Overview":
             hole=0.6
         )
         fig_pie.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e293b',
+            paper_bgcolor='#1e293b',
             showlegend=True,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
+            font_color="#e2e8f0"
         )
         st.plotly_chart(fig_pie, use_container_width=True)
 
@@ -254,17 +264,9 @@ if st.session_state['view_mode'] == "Dashboard Overview":
 
     df_invoices = pd.DataFrame(all_invoices_list)
 
-    # Filter
-    col_filter, _ = st.columns([2, 4])
-    with col_filter:
-        status_filter = st.multiselect(
-            "Filter by Status", 
-            options=df_invoices['payment_status'].unique(), 
-            default=df_invoices['payment_status'].unique()
-        )
-
     if not df_invoices.empty:
-        df_filtered = df_invoices[df_invoices['payment_status'].isin(status_filter)]
+        # The filter section was removed, so we use the full df_invoices DataFrame
+        df_filtered = df_invoices.copy()
 
         # Add a column for the button action
         df_filtered['analyze'] = False
@@ -337,7 +339,7 @@ elif st.session_state['view_mode'] == "Customer Analysis":
 
     # Customer Header Card
     st.markdown(f"""
-    <div style="background-color: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+    <div style="background-color: #1e293b; padding: 24px; border-radius: 16px; border: 1px solid #334155; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h2 style="margin: 0; color: #0f172a;">{customer_data['customer_name']}</h2>
@@ -361,22 +363,14 @@ elif st.session_state['view_mode'] == "Customer Analysis":
     with c2:
         # Sentiment Score with Trend
         trend_icon = "↗" if customer_data['sentiment_trend'] == "Rising" else "↘" if customer_data['sentiment_trend'] == "Falling" else "→"
-        trend_color = "delta-pos" if customer_data['sentiment_trend'] == "Rising" else "delta-neg" if customer_data['sentiment_trend'] == "Falling" else ""
-
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Sentiment Score</div>
-            <div class="metric-value">{customer_data['sentiment_score']:.2f}</div>
-            <div class="metric-delta {trend_color}">{trend_icon} {customer_data['sentiment_trend']}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        delta_color = "normal" if customer_data['sentiment_trend'] == "Rising" else "inverse" if customer_data['sentiment_trend'] == "Falling" else ""
+        create_metric_card("Sentiment Score", f"{customer_data['sentiment_score']:.2f}", customer_data['sentiment_trend'], delta_color=delta_color, trend_icon=trend_icon)
     with c3:
         create_metric_card("Total Invoiced", format_currency(customer_data['total_invoice_amount']))
     with c4:
         create_metric_card("Outstanding", format_currency(customer_data['total_receivable']))
     with c5:
-        create_metric_card("Overdue", format_currency(customer_data['total_overdue_amount']), "Critical", delta_color="inverse")
+        create_metric_card("Overdue", format_currency(customer_data['total_overdue_amount']), "Critical Amount", delta_color="inverse")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -399,11 +393,12 @@ elif st.session_state['view_mode'] == "Customer Analysis":
             color_continuous_scale='Reds'
         )
         fig_aging.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e293b',
+            paper_bgcolor='#1e293b',
             xaxis_title="",
             yaxis_title="Amount ($)",
-            showlegend=False
+            showlegend=False,
+            font_color="#e2e8f0"
         )
         fig_aging.update_yaxes(showgrid=True, gridcolor='#f1f5f9')
         st.plotly_chart(fig_aging, use_container_width=True)
