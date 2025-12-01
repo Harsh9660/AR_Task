@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Custom CSS for Premium Styling ---
+# --- Custom CSS for Dark Theme Premium Styling ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -23,30 +23,34 @@ st.markdown("""
     }
 
     .stApp {
-        background-color: #f8fafc;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
     }
 
     .metric-card {
-        background-color: #ffffff;
+        background: linear-gradient(145deg, #1e1e2e 0%, #252538 100%);
         padding: 24px;
         border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid #f1f5f9;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
     }
     .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3);
+        border: 1px solid rgba(59, 130, 246, 0.5);
     }
     .metric-value {
         font-size: 32px;
         font-weight: 700;
-        color: #0f172a;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         margin-bottom: 4px;
     }
     .metric-label {
         font-size: 14px;
-        color: #64748b;
+        color: #94a3b8;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -56,8 +60,8 @@ st.markdown("""
         font-weight: 600;
         margin-top: 8px;
     }
-    .delta-pos { color: #10b981; }
-    .delta-neg { color: #ef4444; }
+    .delta-pos { color: #34d399; }
+    .delta-neg { color: #f87171; }
     
     /* Custom Button Styling */
     .stButton button {
@@ -65,26 +69,62 @@ st.markdown("""
         border-radius: 8px;
         font-weight: 600;
         padding: 0.5rem 1rem;
-        transition: all 0.2s;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s;
+    }
+    .stButton button:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
     }
     
     /* Table Styling */
     .stDataFrame {
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        background-color: #1e1e2e;
     }
     
     /* Header Styling */
     h1, h2, h3 {
-        color: #0f172a;
+        color: #f1f5f9;
         font-weight: 700;
+        text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
     }
     
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+        border-right: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: #e2e8f0 !important;
+    }
+    
+    /* Text color adjustments */
+    p, span, div {
+        color: #cbd5e1;
+    }
+    
+    /* Input fields */
+    .stSelectbox, .stMultiSelect {
+        background-color: #1e1e2e;
+        border-radius: 8px;
+    }
+    
+    /* Download button */
+    .stDownloadButton button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+    }
+    .stDownloadButton button:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -207,14 +247,15 @@ if st.session_state['view_mode'] == "Dashboard Overview":
             color_discrete_sequence=['#3b82f6']
         )
         fig_trend.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e1e2e',
+            paper_bgcolor='#1e1e2e',
             xaxis_title="Date",
             yaxis_title="Amount ($)",
-            hovermode="x unified"
+            hovermode="x unified",
+            font=dict(color='#cbd5e1')
         )
-        fig_trend.update_xaxes(showgrid=False)
-        fig_trend.update_yaxes(showgrid=True, gridcolor='#f1f5f9')
+        fig_trend.update_xaxes(showgrid=False, color='#cbd5e1')
+        fig_trend.update_yaxes(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='#cbd5e1')
         st.plotly_chart(fig_trend, use_container_width=True)
 
     with c2:
@@ -233,10 +274,11 @@ if st.session_state['view_mode'] == "Dashboard Overview":
             hole=0.6
         )
         fig_pie.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e1e2e',
+            paper_bgcolor='#1e1e2e',
             showlegend=True,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5, font=dict(color='#cbd5e1')),
+            font=dict(color='#cbd5e1')
         )
         st.plotly_chart(fig_pie, use_container_width=True)
 
@@ -284,11 +326,18 @@ if st.session_state['view_mode'] == "Dashboard Overview":
             
             # Status Badge
             status = row['payment_status']
-            bg_color = "#fee2e2" if status == "Unpaid" and row['days_past_due'] > 0 else "#dcfce7" if status == "Paid" else "#ffedd5"
-            text_color = "#991b1b" if status == "Unpaid" and row['days_past_due'] > 0 else "#166534" if status == "Paid" else "#9a3412"
+            if status == "Unpaid" and row['days_past_due'] > 0:
+                bg_color = "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
+                text_color = "white"
+            elif status == "Paid":
+                bg_color = "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                text_color = "white"
+            else:
+                bg_color = "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+                text_color = "white"
             
             c5.markdown(f"""
-            <span style='background-color: {bg_color}; color: {text_color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;'>
+            <span style='background: {bg_color}; color: {text_color}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.3);'>
                 {status}
             </span>
             """, unsafe_allow_html=True)
@@ -340,16 +389,16 @@ elif st.session_state['view_mode'] == "Customer Analysis":
     
     # Customer Header Card
     st.markdown(f"""
-    <div style="background-color: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+    <div style="background: linear-gradient(145deg, #1e1e2e 0%, #252538 100%); padding: 24px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h2 style="margin: 0; color: #0f172a;">{customer_data['customer_name']}</h2>
-                <p style="margin: 4px 0 0 0; color: #64748b;">Customer ID: {customer_data['customer_id']} • <span style="color: #3b82f6;">Premium Tier</span></p>
+                <h2 style="margin: 0; color: #f1f5f9; text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);">{customer_data['customer_name']}</h2>
+                <p style="margin: 4px 0 0 0; color: #94a3b8;">Customer ID: {customer_data['customer_id']} • <span style="color: #60a5fa;">Premium Tier</span></p>
             </div>
             <div style="text-align: right;">
-                <div style="background-color: {'#fee2e2' if customer_data['risk_level'] == 'High' else '#ffedd5' if customer_data['risk_level'] == 'Medium' else '#dcfce7'}; 
-                            color: {'#991b1b' if customer_data['risk_level'] == 'High' else '#9a3412' if customer_data['risk_level'] == 'Medium' else '#166534'}; 
-                            padding: 8px 16px; border-radius: 20px; font-weight: 700; display: inline-block;">
+                <div style="background: {'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' if customer_data['risk_level'] == 'High' else 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' if customer_data['risk_level'] == 'Medium' else 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}; 
+                            color: white; 
+                            padding: 8px 16px; border-radius: 20px; font-weight: 700; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                     {customer_data['risk_level']} Risk
                 </div>
             </div>
@@ -402,13 +451,15 @@ elif st.session_state['view_mode'] == "Customer Analysis":
             color_continuous_scale='Reds'
         )
         fig_aging.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='#1e1e2e',
+            paper_bgcolor='#1e1e2e',
             xaxis_title="",
             yaxis_title="Amount ($)",
-            showlegend=False
+            showlegend=False,
+            font=dict(color='#cbd5e1')
         )
-        fig_aging.update_yaxes(showgrid=True, gridcolor='#f1f5f9')
+        fig_aging.update_xaxes(color='#cbd5e1')
+        fig_aging.update_yaxes(showgrid=True, gridcolor='rgba(255,255,255,0.1)', color='#cbd5e1')
         st.plotly_chart(fig_aging, use_container_width=True)
 
     with row1_2:

@@ -131,7 +131,7 @@ dmypy.json
 .DS_Store
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
 
 # Local data files
 *.csv
