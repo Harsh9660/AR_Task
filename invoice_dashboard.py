@@ -58,7 +58,7 @@ st.markdown("""
     .metric-delta {
         font-size: 13px;
         font-weight: 600;
-        margin-top: 8px;
+        margin-top: 6px;
     }
     .delta-pos { color: #34d399; }
     .delta-neg { color: #f87171; }
@@ -146,8 +146,8 @@ if 'is_loading' not in st.session_state:
 
 def simulate_api_call():
     """Simulates an API call with a spinner."""
-    with st.spinner('Fetching billing insights from server...'):
-        time.sleep(1.2)  # Simulate latency
+    with st.spinner('Loading billing insights...'):
+        time.sleep(0.1)  # Minimal delay for smooth UX
 
 def switch_to_analysis(customer_name):
     st.session_state['selected_customer'] = customer_name
@@ -157,6 +157,31 @@ def switch_to_analysis(customer_name):
 # --- Helper Functions ---
 def format_currency(value):
     return f"${value:,.2f}"
+
+@st.cache_data(ttl=300)
+def calculate_aggregate_metrics(data):
+    """Calculate aggregate metrics with caching."""
+    total_receivable = sum(item['total_receivable'] for item in data)
+    total_overdue = sum(item['total_overdue_amount'] for item in data)
+    total_customers = len(data)
+    high_risk_customers = sum(1 for item in data if item['risk_level'] == 'High')
+    return {
+        'total_receivable': total_receivable,
+        'total_overdue': total_overdue,
+        'total_customers': total_customers,
+        'high_risk_customers': high_risk_customers
+    }
+
+@st.cache_data(ttl=300)
+def prepare_invoice_dataframe(data):
+    """Prepare invoice dataframe with caching."""
+    all_invoices_list = []
+    for customer in data:
+        for inv in customer['invoices_details']:
+            inv_copy = inv.copy()
+            inv_copy['customer_name'] = customer['customer_name']
+            all_invoices_list.append(inv_copy)
+    return pd.DataFrame(all_invoices_list)
 
 def create_metric_card(label, value, delta=None, delta_color="normal"):
     delta_html = ""
@@ -203,22 +228,19 @@ if st.session_state['view_mode'] == "Dashboard Overview":
     st.markdown("Real-time financial insights and performance metrics.")
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Aggregate Metrics
-    total_receivable = sum(item['total_receivable'] for item in data)
-    total_overdue = sum(item['total_overdue_amount'] for item in data)
-    total_customers = len(data)
-    high_risk_customers = sum(1 for item in data if item['risk_level'] == 'High')
+    # Aggregate Metrics (cached)
+    metrics = calculate_aggregate_metrics(data)
 
     # Display Metrics in Custom Cards
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        create_metric_card("Total Receivable", format_currency(total_receivable), "+12% vs last month")
+        create_metric_card("Total Receivable", format_currency(metrics['total_receivable']), "+12% vs last month")
     with col2:
-        create_metric_card("Total Overdue", format_currency(total_overdue), "+5% vs last month", delta_color="inverse")
+        create_metric_card("Total Overdue", format_currency(metrics['total_overdue']), "+5% vs last month", delta_color="inverse")
     with col3:
-        create_metric_card("Active Customers", str(total_customers), "+2 new this month")
+        create_metric_card("Active Customers", str(metrics['total_customers']), "+2 new this month")
     with col4:
-        create_metric_card("High Risk Clients", str(high_risk_customers), "-1 vs last month", delta_color="inverse")
+        create_metric_card("High Risk Clients", str(metrics['high_risk_customers']), "-1 vs last month", delta_color="inverse")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -285,15 +307,8 @@ if st.session_state['view_mode'] == "Dashboard Overview":
     # Recent Invoices Table
     st.subheader("Recent Invoices")
     
-    # Prepare Table Data
-    all_invoices_list = []
-    for customer in data:
-        for inv in customer['invoices_details']:
-            inv_copy = inv.copy()
-            inv_copy['customer_name'] = customer['customer_name']
-            all_invoices_list.append(inv_copy)
-    
-    df_invoices = pd.DataFrame(all_invoices_list)
+    # Prepare Table Data (cached)
+    df_invoices = prepare_invoice_dataframe(data)
 
     # Filter
     col_filter, _ = st.columns([2, 4])

@@ -7,3 +7,13 @@ font="sans serif"
 
 [server]
 headless = true
+enableCORS = false
+enableXsrfProtection = false
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
+
+[logger]
+level = "error"
+messageFormat = "%(asctime)s %(message)s"
